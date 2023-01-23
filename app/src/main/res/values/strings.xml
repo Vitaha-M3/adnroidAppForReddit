@@ -2,4 +2,6 @@
     <string name="app_name">App for Reddit</string>
     <string name="posted_by">Posted by</string>
     <string name="author">Author</string>
+    <string name="text_publication">Text publication</string>
+    <string name="image_for_this_publication">Image for this publication</string>
 </resources>

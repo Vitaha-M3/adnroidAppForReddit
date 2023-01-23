@@ -1,9 +1,10 @@
 package com.example.appforreddit;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -20,14 +21,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Objects;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
     private static final String JSON_URL = "https://reddit.com/top.json";
+    private SwipeRefreshLayout reLoadReddit;
     ListView listView;
 
     @Override
@@ -36,7 +36,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         listView = findViewById(R.id.listView);
+        reLoadReddit = findViewById(R.id.swipe);
         loadJSONFromURL(JSON_URL);
+
+        reLoadReddit.setOnRefreshListener(this);
     }
 
     private void loadJSONFromURL(String url){
@@ -73,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
         try{
             if(jsonArray != null){
                 for(int i = 0; i < jsonArray.length(); i++){
-                    arrList.add(jsonArray.getJSONObject(i));
+                    arrList.add(jsonArray.getJSONObject(i).getJSONObject("data"));
                 }
             }
         }catch (JSONException e){
@@ -83,13 +86,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String encodingToUTF8(String response){
-        try {
-            byte[] code = response.getBytes("ISO-8859-1");
-            response = new String(code, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            return null;
-        }
+        byte[] code = response.getBytes(StandardCharsets.ISO_8859_1);
+        response = new String(code, StandardCharsets.UTF_8);
         return response;
+    }
+
+    @Override
+    public void onRefresh() {
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                loadJSONFromURL(JSON_URL);
+                reLoadReddit.setRefreshing(false);
+            }
+        }, 5000);
     }
 }

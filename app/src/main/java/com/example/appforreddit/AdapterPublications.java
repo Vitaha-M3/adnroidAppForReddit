@@ -5,17 +5,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class AdapterPublications extends ArrayAdapter<JSONObject> {
     int listLayout;
@@ -35,12 +33,30 @@ public class AdapterPublications extends ArrayAdapter<JSONObject> {
         View itemView = inflater.inflate(listLayout, null, false);
         TextView author = itemView.findViewById(R.id.author);
         TextView created = itemView.findViewById(R.id.created);
+        TextView labelPost = itemView.findViewById(R.id.labelPost);
+        ImageView imagePublication = itemView.findViewById(R.id.imagePublication);
         try {
-            author.setText(list.get(position).getJSONObject("data").getString("subreddit"));
-            created.setText(list.get(position).getJSONObject("data").getString("created"));
+            author.setText(list.get(position).getString("subreddit"));
+            created.setText(adaptPostedBy(list.get(position).getLong("created")));
+            labelPost.setText(list.get(position).getString("title"));
+            Picasso.get().load(list.get(position).getString("url_overridden_by_dest")).into(imagePublication);
         }catch(JSONException e){
             e.printStackTrace();
         }
         return itemView;
+    }
+
+    private String adaptPostedBy(Long created){
+        StringBuilder postedBy = new StringBuilder("Posted ");
+        long timeAgo = System.currentTimeMillis()/1000-created;
+        int day = 86400;
+        int hour = 3600;
+        int minute = 60;
+        int daysOut = (int) Math.floor(timeAgo/day);
+        int hoursOut = (int) Math.floor((timeAgo - daysOut * day)/hour);
+        int minutesOut = (int) Math.floor((timeAgo - daysOut * day - hoursOut * hour)/minute);
+        postedBy.append(daysOut>0 ? daysOut + " day" : hoursOut > 0 ? hoursOut + " h" : minutesOut > 0 ? minutesOut + " m" : " < 1 minute");
+        postedBy.append(" ago");
+        return postedBy.toString();
     }
 }
