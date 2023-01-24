@@ -4,4 +4,5 @@
     <string name="author">Author</string>
     <string name="text_publication">Text publication</string>
     <string name="image_for_this_publication">Image for this publication</string>
+    <string name="amount_comments">amount comments</string>
 </resources>

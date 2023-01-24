@@ -35,11 +35,13 @@ public class AdapterPublications extends ArrayAdapter<JSONObject> {
         TextView created = itemView.findViewById(R.id.created);
         TextView labelPost = itemView.findViewById(R.id.labelPost);
         ImageView imagePublication = itemView.findViewById(R.id.imagePublication);
+        TextView comments = itemView.findViewById(R.id.comments);
         try {
             author.setText(list.get(position).getString("subreddit"));
             created.setText(adaptPostedBy(list.get(position).getLong("created")));
             labelPost.setText(list.get(position).getString("title"));
             Picasso.get().load(list.get(position).getString("url_overridden_by_dest")).into(imagePublication);
+            comments.setText(list.get(position).getString("num_comments"));
         }catch(JSONException e){
             e.printStackTrace();
         }
@@ -51,12 +53,14 @@ public class AdapterPublications extends ArrayAdapter<JSONObject> {
         long timeAgo = System.currentTimeMillis()/1000-created;
         int day = 86400;
         int hour = 3600;
-        int minute = 60;
         int daysOut = (int) Math.floor(timeAgo/day);
         int hoursOut = (int) Math.floor((timeAgo - daysOut * day)/hour);
-        int minutesOut = (int) Math.floor((timeAgo - daysOut * day - hoursOut * hour)/minute);
-        postedBy.append(daysOut>0 ? daysOut + " day" : hoursOut > 0 ? hoursOut + " h" : minutesOut > 0 ? minutesOut + " m" : " < 1 minute");
-        postedBy.append(" ago");
+        int minutesOut = (int) Math.floor((timeAgo - daysOut * day - hoursOut * hour)/60);
+        postedBy.append(daysOut>0 ? daysOut + " day " : hoursOut > 0 ? hoursOut + " h " : minutesOut > 0 ? minutesOut + " m " : " < 1 minute ");
+        if(daysOut > 0 && hoursOut > 0){
+            postedBy.append(hoursOut).append(" h ");
+        }
+        postedBy.append("ago");
         return postedBy.toString();
     }
 }

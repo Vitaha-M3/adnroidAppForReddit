@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                             JSONObject jObj = new JSONObject(Objects.requireNonNull(encodingToUTF8(response)));
                             JSONArray children = jObj.getJSONObject("data").getJSONArray("children");
                             ArrayList<JSONObject> listItems = getArrListFromJSONArr(children);
-                            ListAdapter adapter = new AdapterPublications(getApplicationContext(), R.layout.row, R.id.author, listItems);
+                            ListAdapter adapter = new AdapterPublications(getApplicationContext(), R.layout.publication, R.id.author, listItems);
                             listView.setAdapter(adapter);
                         } catch (JSONException e) {
                             e.printStackTrace();
