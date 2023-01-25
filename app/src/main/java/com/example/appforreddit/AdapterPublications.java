@@ -1,6 +1,7 @@
 package com.example.appforreddit;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,7 +16,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-public class AdapterPublications extends ArrayAdapter<JSONObject> {
+public class AdapterPublications extends ArrayAdapter<JSONObject>{
     int listLayout;
     ArrayList<JSONObject> list;
     private final Context context;
@@ -41,6 +42,19 @@ public class AdapterPublications extends ArrayAdapter<JSONObject> {
             created.setText(adaptPostedBy(list.get(position).getLong("created")));
             labelPost.setText(list.get(position).getString("title"));
             Picasso.get().load(list.get(position).getString("url_overridden_by_dest")).into(imagePublication);
+            imagePublication.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(view.getContext(), ImageFullscreenActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    try {
+                        intent.putExtra("image", list.get(position).getString("url_overridden_by_dest"));
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
+                    }
+                    view.getContext().startActivity(intent);
+                }
+            });
             comments.setText(list.get(position).getString("num_comments"));
         }catch(JSONException e){
             e.printStackTrace();
