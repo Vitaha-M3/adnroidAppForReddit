@@ -1,4 +1,4 @@
-package com.example.appforreddit;
+package com.example.appforreddit.activity;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,6 +15,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.example.appforreddit.R;
 import com.squareup.picasso.Picasso;
 
 public class ImageFullscreenActivity extends AppCompatActivity {
