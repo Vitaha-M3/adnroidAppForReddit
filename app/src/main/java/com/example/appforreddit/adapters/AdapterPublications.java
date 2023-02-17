@@ -1,4 +1,4 @@
-package com.example.appforreddit.services;
+package com.example.appforreddit.adapters;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -10,8 +10,11 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+
 import com.example.appforreddit.activity.ImageFullscreenActivity;
 import com.example.appforreddit.R;
+import com.example.appforreddit.utils.WhenPostedUtil;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
@@ -19,12 +22,12 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-public class AdapterPublicationsService extends ArrayAdapter<JSONObject>{
-    int listLayout;
-    ArrayList<JSONObject> list;
+public class AdapterPublications extends ArrayAdapter<JSONObject>{
+    private int listLayout;
+    private ArrayList<JSONObject> list;
     private final Context context;
 
-    public AdapterPublicationsService(Context context, int listLayout, int field, ArrayList<JSONObject> list){
+    public AdapterPublications(Context context, int listLayout, int field, ArrayList<JSONObject> list){
         super(context, listLayout, field, list);
         this.context = context;
         this.listLayout = listLayout;
@@ -35,6 +38,7 @@ public class AdapterPublicationsService extends ArrayAdapter<JSONObject>{
     @Override
     public View getView(int position, View convertView, ViewGroup parent){
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        @SuppressLint("ViewHolder")
         View itemView = inflater.inflate(listLayout, null, false);
         TextView author = itemView.findViewById(R.id.author);
         TextView created = itemView.findViewById(R.id.created);
@@ -43,26 +47,30 @@ public class AdapterPublicationsService extends ArrayAdapter<JSONObject>{
         TextView comments = itemView.findViewById(R.id.comments);
         try {
             author.setText(list.get(position).getString("subreddit_name_prefixed"));
-            created.setText(WhenPostedService.adaptWhenPosted(list.get(position).getLong("created")));
+            created.setText(WhenPostedUtil.adaptWhenPosted(list.get(position).getLong("created")));
             labelPost.setText(list.get(position).getString("title"));
-            Picasso.get().load(list.get(position).getString("url_overridden_by_dest")).into(imagePublication);
-            imagePublication.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Intent intent = new Intent(view.getContext(), ImageFullscreenActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    try {
-                        intent.putExtra("image", list.get(position).getString("url_overridden_by_dest"));
-                    } catch (JSONException e) {
-                        throw new RuntimeException(e);
-                    }
-                    view.getContext().startActivity(intent);
-                }
-            });
+            String imageUrl = list.get(position).has("url_overridden_by_dest") ? list.get(position).getString("url_overridden_by_dest") : null;
+            if(imageUrl != null) {
+                Picasso.get().load(imageUrl).into(imagePublication);
+                listenerForOpenImage(imagePublication, position);
+            }
             comments.setText("Comments: " + list.get(position).getString("num_comments"));
         }catch(JSONException e){
             e.printStackTrace();
         }
         return itemView;
+    }
+
+    private void listenerForOpenImage(@NonNull ImageView image, int position){
+        image.setOnClickListener(view -> {
+            Intent intent = new Intent(view.getContext(), ImageFullscreenActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try {
+                intent.putExtra("image", list.get(position).getString("url_overridden_by_dest"));
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+            view.getContext().startActivity(intent);
+        });
     }
 }

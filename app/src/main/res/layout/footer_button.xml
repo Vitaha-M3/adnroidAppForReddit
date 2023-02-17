@@ -21,12 +21,17 @@
             android:layout_marginStart="10dp"
             android:layout_weight="1"
             android:contentDescription="@string/next_page"
-            android:text="@string/previous" />
+            android:text="@string/previous"
+            android:onClick="navigateButtonClickListener"/>
 
-        <Space
+        <TextView
+            android:id="@+id/currentPage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="2" />
+            android:layout_weight="2"
+            android:text="0"
+            android:textAlignment="center"
+            android:textAppearance="@style/TextAppearance.AppCompat.Display2" />
 
         <Button
             android:id="@+id/nextButton"
@@ -35,6 +40,7 @@
             android:layout_marginEnd="10dp"
             android:layout_weight="1"
             android:contentDescription="@string/previous_page"
-            android:text="@string/next" />
+            android:text="@string/next"
+            android:onClick="navigateButtonClickListener"/>
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

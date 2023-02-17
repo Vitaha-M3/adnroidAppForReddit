@@ -1,6 +1,10 @@
-package com.example.appforreddit.services;
+package com.example.appforreddit.utils;
 
-public class WhenPostedService {
+import androidx.annotation.NonNull;
+
+public class WhenPostedUtil {
+
+    @NonNull
     public static String adaptWhenPosted(Long created){
         StringBuilder postedBy = new StringBuilder("Posted ");
         long timeAgo = System.currentTimeMillis()/1000-created;

@@ -1,15 +1,14 @@
-package com.example.appforreddit.services;
+package com.example.appforreddit.utils;
 
 import java.util.ArrayList;
 
-public class PaginationService {
+public class PaginationUtil {
     private final ArrayList<String> listPage;
 
-    public PaginationService() {
+    public PaginationUtil() {
         this.listPage = new ArrayList<>();
         setFirstNode();
     }
-
     public void setNextPage(int targetPage, String nextPage) {
         if(!listPage.contains(nextPage))
             listPage.add(targetPage, nextPage);
@@ -17,15 +16,10 @@ public class PaginationService {
     private void setFirstNode(){
         listPage.add("");
     }
-
-    public String getPreviousPage(int targetPage){
-        if(!listPage.isEmpty())
+    public String getPage(int targetPage){
+        if(listPage.size() > 1)
             return listPage.get(targetPage);
         else
             return "";
-    }
-
-    public boolean pagesIsEmpty(){
-        return listPage.isEmpty();
     }
 }

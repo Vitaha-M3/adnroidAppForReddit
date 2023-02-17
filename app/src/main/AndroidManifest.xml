@@ -20,7 +20,6 @@
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -28,6 +27,10 @@
             android:name=".activity.ImageFullscreenActivity"
             android:parentActivityName=".activity.MainActivity"
             android:exported="false" />
+        <service
+            android:name=".services.LoadPageService"
+            android:enabled="true"
+            android:exported="false"/>
     </application>
 
 </manifest>

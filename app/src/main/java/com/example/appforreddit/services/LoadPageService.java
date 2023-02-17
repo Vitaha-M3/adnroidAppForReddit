@@ -1,17 +1,17 @@
 package com.example.appforreddit.services;
 
-import android.app.Activity;
-import android.content.Context;
-import android.widget.ListAdapter;
-import android.widget.ListView;
-import android.widget.ProgressBar;
+import android.app.Service;
+import android.content.Intent;
+import android.os.Binder;
+import android.os.IBinder;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.example.appforreddit.R;
+import com.example.appforreddit.utils.PaginationUtil;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -21,34 +21,21 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Objects;
 
-public class LoadPageService {
-    private final String BASE_URL= "https://reddit.com/top.json";
+public class LoadPageService extends Service {
+    private final String BASE_URL = "https://reddit.com/top.json?limit=20";
+    private final String TAG = "LoadPageService";
+    private final IBinder loadPageBinder = new LoadPageBinder();
     private String currentURL;
-    private final Context superContext;
-    private final Activity superActivity;
-    private ListView listView;
-    private  String nextPage = "";
-    private  String previousPage = "";
-    private int currentPage;
-    private final PaginationService paginationService;
+    private PaginationUtil paginationUtil;
+    private ArrayList<JSONObject> listItems;
 
-    public LoadPageService(Context context, Activity activity){
-        this.superContext = context;
-        this.superActivity = activity;
-        paginationService = new PaginationService();
-    }
-
-    public void loadPage(ListView listView, String pageNavigation, int currentPage){
+    public ArrayList<JSONObject> loadPage(String pageNavigation, int currentPage){
         this.currentURL = BASE_URL;
-        this.listView = listView;
-        this.currentPage = currentPage;
-        buildLink(pageNavigation, this.currentPage);
 
-        loadPageFromURL();
+        buildLink(pageNavigation, currentPage);
 
-        if (paginationService.pagesIsEmpty()){
-            paginationService.setNextPage(currentPage+1, nextPage);
-        }
+        loadDataFromURL(currentPage);
+        return listItems;
     }
 
     private void buildLink(String pageNavigation, int currentPage){
@@ -56,61 +43,52 @@ public class LoadPageService {
             StringBuilder stringBuilder= new StringBuilder(BASE_URL);
             switch (pageNavigation){
                 case "nextPage":
-                    stringBuilder.append("?after=").append(nextPage);
-                    stringBuilder.append("&limit=20");
+                    stringBuilder.append("&after=").append(paginationUtil.getPage(currentPage));
                     currentURL = stringBuilder.toString();
                     break;
                 case "previousPage":
-                    if(currentPage==1){
-                        refreshLoadPage();
+                    if(currentPage==0){
+                        currentURL = BASE_URL;
+                        loadDataFromURL(currentPage);
                     }else {
-                        previousPage = paginationService.getPreviousPage(currentPage-1);
-                        stringBuilder.append("?after=").append(previousPage);
-                        stringBuilder.append("&limit=20");
+                        stringBuilder.append("&after=").append(paginationUtil.getPage(currentPage));
                         currentURL = stringBuilder.toString();
                     }
                     break;
             }
+        }else if (currentPage>0){
+            currentURL = currentURL + "&after=" + paginationUtil.getPage(currentPage);
         }
     }
 
-    private void loadPageFromURL() {
-        final ProgressBar progressBar = superActivity.findViewById(R.id.progressBar);
-        progressBar.setVisibility(ListView.VISIBLE);
+    private void loadDataFromURL(int currentPage){
         StringRequest stringRequest = new StringRequest(Request.Method.GET, currentURL,
                 response -> {
-                    progressBar.setVisibility(ListView.INVISIBLE);
                     try{
                         JSONObject jObj = new JSONObject(Objects.requireNonNull(encodingToUTF8(response)));
                         JSONArray children = jObj.getJSONObject("data").getJSONArray("children");
-                        ArrayList<JSONObject> listItems = getArrListFromJSONArr(children);
-                        ListAdapter adapter = new AdapterPublicationsService(superContext.getApplicationContext(), R.layout.publication, R.id.author, listItems);
-                        nextPage = jObj.getJSONObject("data").getString("after");
-                        listView.setAdapter(adapter);
+                        getArrListFromJSONArr(children, listItems);
+                        paginationUtil.setNextPage(currentPage+1, jObj.getJSONObject("data").getString("after"));
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 },
-                error -> Toast.makeText(superContext.getApplicationContext(), error.getMessage(), Toast.LENGTH_SHORT).show());
-        RequestQueue requestQueue = Volley.newRequestQueue(superContext);
+                error -> Toast.makeText(getApplicationContext(), error.getMessage(), Toast.LENGTH_SHORT).show());
+        RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
         requestQueue.add(stringRequest);
-        if(currentPage > 0){
-            paginationService.setNextPage(currentPage+1, nextPage);
-        }
     }
 
-    private ArrayList<JSONObject> getArrListFromJSONArr(JSONArray jsonArray) {
-        ArrayList<JSONObject> arrList = new ArrayList<>();
+    private void getArrListFromJSONArr(JSONArray jsonArray, ArrayList<JSONObject> listItems) {
+        listItems.clear();
         try{
             if(jsonArray != null){
                 for(int i = 0; i < jsonArray.length(); i++){
-                    arrList.add(jsonArray.getJSONObject(i).getJSONObject("data"));
+                    listItems.add(jsonArray.getJSONObject(i).getJSONObject("data"));
                 }
             }
         }catch (JSONException e){
             e.printStackTrace();
         }
-        return arrList;
     }
 
     private String encodingToUTF8(String response){
@@ -119,10 +97,49 @@ public class LoadPageService {
         return response;
     }
 
-    public void refreshLoadPage(){
-        currentURL = BASE_URL;
-        currentPage = 0;
-        previousPage = "";
-        loadPageFromURL();
+    @Override
+    public void onCreate() {
+        Log.d(TAG, "LoadPageService onCreate");
+        paginationUtil = new PaginationUtil();
+        listItems = new ArrayList<>();
+        super.onCreate();
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "LoadPageService onStartCommand");
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        Log.d(TAG, "LoadPageService onBind");
+        return loadPageBinder;
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        Log.d(TAG, "LoadPageService onUnbind");
+        return super.onUnbind(intent);
+    }
+
+    @Override
+    public void onRebind(Intent intent) {
+        Log.d(TAG, "LoadPageService onRebind");
+        super.onRebind(intent);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "LoadPageService onDestroy");
+        paginationUtil = null;
+        listItems = null;
+    }
+
+    public class LoadPageBinder extends Binder {
+        public LoadPageService getService() {
+            return LoadPageService.this;
+        }
     }
 }
